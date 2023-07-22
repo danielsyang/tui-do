@@ -1,6 +1,6 @@
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Corner, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, List, ListItem},
@@ -43,4 +43,42 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         .highlight_symbol(">> ");
 
     frame.render_stateful_widget(widget_items, chunks[0], &mut app.items.state);
+
+    let events = app
+        .events
+        .iter()
+        .map(|&(event, level)| {
+            let s = match level {
+                "CRITICAL" => Style::default().fg(Color::Red),
+                "ERROR" => Style::default().fg(Color::Magenta),
+                "WARNING" => Style::default().fg(Color::Yellow),
+                "INFO" => Style::default().fg(Color::Green),
+                _ => Style::default(),
+            };
+
+            let header = Spans::from(vec![
+                Span::styled(format!("{:<9}", level), s),
+                Span::raw(" "),
+                Span::styled(
+                    "2020-01-01 10:00:00",
+                    Style::default().add_modifier(Modifier::ITALIC),
+                ),
+            ]);
+
+            let logs = Spans::from(vec![Span::raw(event)]);
+
+            ListItem::new(vec![
+                Spans::from("-".repeat(chunks[1].width as usize)),
+                header,
+                Spans::from(""),
+                logs,
+            ])
+        })
+        .collect::<Vec<_>>();
+
+    let events_list = List::new(events)
+        .block(Block::default().borders(Borders::ALL).title("Events"))
+        .start_corner(Corner::BottomLeft);
+
+    frame.render_widget(events_list, chunks[1]);
 }

@@ -5,7 +5,41 @@ pub struct StatefulList {
     pub items: Vec<(&'static str, usize)>,
 }
 
-impl StatefulList {}
+impl StatefulList {
+    pub fn unselect(&mut self) {
+        self.state.select(None)
+    }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+
+        self.state.select(Some(i))
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+
+        self.state.select(Some(i))
+    }
+}
 
 pub struct MyApp {
     pub items: StatefulList,
@@ -54,7 +88,7 @@ impl MyApp {
                 ("Event6", "INFO"),
                 ("Event7", "WARNING"),
                 ("Event8", "INFO"),
-                ("Event9", "INFO"),
+                ("Event9", "c"),
                 ("Event10", "INFO"),
                 ("Event11", "CRITICAL"),
                 ("Event12", "INFO"),
@@ -74,5 +108,10 @@ impl MyApp {
                 ("Event26", "INFO"),
             ],
         }
+    }
+
+    pub fn on_tick(&mut self) {
+        let event = self.events.remove(0);
+        self.events.push(event)
     }
 }

@@ -1,11 +1,14 @@
 mod app;
 mod ui;
 
-use std::{io, time::Instant};
+use std::{
+    io,
+    time::{Duration, Instant},
+};
 
 use app::MyApp;
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -22,8 +25,9 @@ fn main() {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
     let app = MyApp::new();
+    let tick_rate = Duration::from_millis(250);
 
-    let r = run_app(&mut terminal, app);
+    let r = run_app(&mut terminal, app, tick_rate);
 
     disable_raw_mode().unwrap();
     execute!(
@@ -40,10 +44,35 @@ fn main() {
     }
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: MyApp) -> io::Result<()> {
+fn run_app<B: Backend>(
+    terminal: &mut Terminal<B>,
+    mut app: MyApp,
+    tick_rate: Duration,
+) -> io::Result<()> {
     let mut last_tick = Instant::now();
 
     loop {
         terminal.draw(|t| ui(t, &mut app)).unwrap();
+
+        let timeout = tick_rate
+            .checked_sub(last_tick.elapsed())
+            .unwrap_or_else(|| Duration::from_secs(0));
+
+        if crossterm::event::poll(timeout).unwrap() {
+            if let Event::Key(key) = event::read().unwrap() {
+                match key.code {
+                    KeyCode::Char('q') => return Ok(()),
+                    KeyCode::Char('w') => app.items.previous(),
+                    KeyCode::Char('s') => app.items.next(),
+                    KeyCode::Char('e') => app.items.unselect(),
+                    _ => {}
+                }
+            }
+        }
+
+        if last_tick.elapsed() >= tick_rate {
+            app.on_tick();
+            last_tick = Instant::now();
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a simple todo list application written in Rust. It uses the [TUI.rs](https://github.com/fdehau/tui-rs) library to provide a terminal user interface.
+This is a simple todo list application written in Rust. It uses the [Ratatui.rs](https://github.com/ratatui-org/ratatui) library to provide a terminal user interface.
 
 #### Jul 20th, 2023
 
@@ -12,3 +12,4 @@ This is a simple todo list application written in Rust. It uses the [TUI.rs](htt
 
 - Finish basic terminal interface
 - Add user input
+- Changed lib to Ratatui

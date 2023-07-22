@@ -1,8 +1,8 @@
-use tui::{
+use ratatui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame,
 };
@@ -19,7 +19,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         .items
         .iter()
         .map(|i| {
-            ListItem::new(vec![Spans::from(Span::styled(i, Style::default()))])
+            ListItem::new(vec![Line::from(Span::styled(i, Style::default()))])
                 .style(Style::default().fg(Color::Black).bg(Color::White))
         })
         .collect::<Vec<_>>();

@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use app::MyApp;
+use app::{InputMode, MyApp};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -59,13 +59,29 @@ fn run_app<B: Backend>(
             .unwrap_or_else(|| Duration::from_secs(0));
 
         if crossterm::event::poll(timeout).unwrap() {
-            if let Event::Key(key) = event::read().unwrap() {
-                match key.code {
-                    KeyCode::Char('q') => return Ok(()),
-                    KeyCode::Char('w') => app.previous_item(),
-                    KeyCode::Char('s') => app.next_item(),
-                    KeyCode::Char('e') => app.unselect(),
-                    _ => {}
+            match app.mode {
+                InputMode::Normal => {
+                    if let Event::Key(key) = event::read().unwrap() {
+                        match key.code {
+                            KeyCode::Char('w') => app.previous_item(),
+                            KeyCode::Char('s') => app.next_item(),
+                            KeyCode::Char('e') => app.unselect(),
+                            KeyCode::Enter => app.set_app_mode(InputMode::Editing),
+                            KeyCode::Esc => return Ok(()),
+                            _ => {}
+                        }
+                    }
+                }
+                InputMode::Editing => {
+                    if let Event::Key(key) = event::read().unwrap() {
+                        match key.code {
+                            KeyCode::Char(c) => app.set_input(&c),
+                            KeyCode::Backspace => app.backspace_input(),
+                            KeyCode::Enter => app.add_to_list(),
+                            KeyCode::Esc => app.set_app_mode(InputMode::Normal),
+                            _ => {}
+                        }
+                    }
                 }
             }
         }

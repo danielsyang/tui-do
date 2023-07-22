@@ -10,4 +10,5 @@ This is a simple todo list application written in Rust. It uses the [TUI.rs](htt
 
 #### Jul 22nd, 2023
 
-- Add basic terminal interface
+- Finish basic terminal interface
+- Add user input

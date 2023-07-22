@@ -18,9 +18,11 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
     let items = app
         .items
         .iter()
-        .map(|i| {
-            ListItem::new(vec![Line::from(Span::styled(i, Style::default()))])
-                .style(Style::default().fg(Color::Black).bg(Color::White))
+        .map(|item| {
+            let content = format!("[ ] {}", item);
+            let line = Line::from(Span::styled(content, Style::default()));
+
+            ListItem::new(vec![line]).style(Style::default().fg(Color::Black).bg(Color::White))
         })
         .collect::<Vec<_>>();
 
@@ -34,8 +36,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
             Style::default()
                 .bg(Color::LightGreen)
                 .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol(">> ");
+        );
 
     frame.render_stateful_widget(widget_items, chunks[0], &mut app.state);
 

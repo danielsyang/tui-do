@@ -49,7 +49,7 @@ fn run_app<B: Backend>(
     mut app: MyApp,
     tick_rate: Duration,
 ) -> io::Result<()> {
-    let mut last_tick = Instant::now();
+    let last_tick = Instant::now();
 
     loop {
         terminal.draw(|t| ui(t, &mut app)).unwrap();
@@ -62,17 +62,12 @@ fn run_app<B: Backend>(
             if let Event::Key(key) = event::read().unwrap() {
                 match key.code {
                     KeyCode::Char('q') => return Ok(()),
-                    KeyCode::Char('w') => app.items.previous(),
-                    KeyCode::Char('s') => app.items.next(),
-                    KeyCode::Char('e') => app.items.unselect(),
+                    KeyCode::Char('w') => app.previous_item(),
+                    KeyCode::Char('s') => app.next_item(),
+                    KeyCode::Char('e') => app.unselect(),
                     _ => {}
                 }
             }
-        }
-
-        if last_tick.elapsed() >= tick_rate {
-            app.on_tick();
-            last_tick = Instant::now();
         }
     }
 }

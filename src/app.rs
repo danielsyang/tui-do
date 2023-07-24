@@ -1,4 +1,7 @@
 use ratatui::widgets::ListState;
+use sqlx::{Pool, Sqlite};
+
+use crate::database::{connection, TaskCrud};
 
 pub enum InputMode {
     Editing,
@@ -10,15 +13,17 @@ pub struct MyApp {
     pub items: Vec<String>,
     pub mode: InputMode,
     pub input_value: String,
+    pub db_connection: Pool<Sqlite>,
 }
 
 impl MyApp {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         MyApp {
             state: ListState::default(),
             items: vec![],
             mode: InputMode::Normal,
             input_value: String::new(),
+            db_connection: connection().await,
         }
     }
 
@@ -71,6 +76,7 @@ impl MyApp {
     }
 
     pub fn add_to_list(&mut self) {
+        self.insert_task();
         let curr = self.input_value.clone();
         if curr.is_empty() {
             return;

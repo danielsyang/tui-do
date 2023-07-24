@@ -1,4 +1,5 @@
 mod app;
+mod database;
 mod ui;
 
 use std::{
@@ -12,19 +13,21 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
 use ui::ui;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     enable_raw_mode().unwrap();
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
-    let app = MyApp::new();
+    let app = MyApp::new().await;
     let tick_rate = Duration::from_millis(250);
 
     let r = run_app(&mut terminal, app, tick_rate);

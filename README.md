@@ -19,3 +19,8 @@ This is a simple todo list application written in Rust. It uses the [Ratatui.rs]
 
 - Added database
 - Add task CRUD
+
+#### Jul 26th 2023
+
+- Add task CRUD
+- Check task as done

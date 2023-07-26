@@ -27,14 +27,15 @@ impl MyApp {
         }
     }
 
-    pub async fn get_tasks_from_database(&self) -> Vec<String> {
+    pub async fn get_tasks_from_database(&mut self) {
         let tasks = self
             .get_tasks()
             .await
             .iter()
             .map(|x| x.description.clone())
             .collect::<Vec<_>>();
-        return tasks;
+
+        self.items = tasks;
     }
 
     pub fn set_app_mode(&mut self, mode: InputMode) {

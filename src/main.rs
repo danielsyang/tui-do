@@ -27,7 +27,8 @@ async fn main() {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture).unwrap();
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
-    let app = MyApp::new().await;
+    let mut app = MyApp::new().await;
+    app.get_tasks_from_database().await;
     let tick_rate = Duration::from_millis(250);
 
     let r = run_app(&mut terminal, app, tick_rate).await;

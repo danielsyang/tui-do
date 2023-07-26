@@ -1,6 +1,9 @@
 use async_trait::async_trait;
-use futures::{StreamExt, TryStreamExt};
-use sqlx::{migrate::MigrateDatabase, Connection, Pool, Sqlite, SqliteConnection, SqlitePool};
+use sqlx::{
+    migrate::MigrateDatabase,
+    types::chrono::{DateTime, Utc},
+    Connection, Pool, Row, Sqlite, SqliteConnection, SqlitePool,
+};
 use uuid::Uuid;
 
 use crate::app::MyApp;
@@ -42,6 +45,7 @@ pub struct Task {
     pub id: String,
     pub description: String,
     pub finished: bool,
+    pub created_at: DateTime<Utc>,
 }
 
 #[async_trait]
@@ -53,12 +57,31 @@ pub trait TaskCrud {
 #[async_trait]
 impl TaskCrud for MyApp {
     async fn get_tasks(&self) -> Vec<Task> {
-        let rows = sqlx::query_as::<_, Task>("SELECT * FROM TASKS ORDER BY CREATED_AT")
-            .fetch_all(&self.db_connection)
-            .await
-            .unwrap();
+        let rows = sqlx::query(
+            "SELECT id, description, finished, created_at FROM Tasks ORDER BY CREATED_AT;",
+        )
+        .fetch_all(&self.db_connection)
+        .await
+        .unwrap();
 
-        return rows;
+        let tasks = rows
+            .iter()
+            .map(|row| {
+                let id = row.get::<String, _>(0);
+                let description = row.get::<String, _>(1);
+                let finished = row.get::<bool, _>(2);
+                let created_at = row.get::<DateTime<Utc>, _>(3);
+
+                Task {
+                    description,
+                    id,
+                    finished,
+                    created_at,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        return tasks;
     }
 
     async fn insert_task(&self, description: &String) -> String {

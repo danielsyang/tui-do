@@ -9,7 +9,7 @@ use ratatui::{
 
 use crate::app::{InputMode, MyApp};
 
-pub async fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
+pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])

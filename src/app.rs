@@ -75,12 +75,12 @@ impl MyApp {
         self.input_value = next_value;
     }
 
-    pub fn add_to_list(&mut self) {
-        self.insert_task();
+    pub async fn add_to_list(&mut self) {
         let curr = self.input_value.clone();
         if curr.is_empty() {
             return;
         }
+        self.insert_task(&curr).await;
 
         self.items.push(curr);
         self.input_value = String::new();

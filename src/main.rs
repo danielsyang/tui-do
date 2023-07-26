@@ -30,7 +30,7 @@ async fn main() {
     let app = MyApp::new().await;
     let tick_rate = Duration::from_millis(250);
 
-    let r = run_app(&mut terminal, app, tick_rate);
+    let r = run_app(&mut terminal, app, tick_rate).await;
 
     disable_raw_mode().unwrap();
     execute!(
@@ -47,7 +47,7 @@ async fn main() {
     }
 }
 
-fn run_app<B: Backend>(
+async fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
     mut app: MyApp,
     tick_rate: Duration,
@@ -80,7 +80,7 @@ fn run_app<B: Backend>(
                         match key.code {
                             KeyCode::Char(c) => app.set_input(&c),
                             KeyCode::Backspace => app.backspace_input(),
-                            KeyCode::Enter => app.add_to_list(),
+                            KeyCode::Enter => app.add_to_list().await,
                             KeyCode::Esc => app.set_app_mode(InputMode::Normal),
                             _ => {}
                         }

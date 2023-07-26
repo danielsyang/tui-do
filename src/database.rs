@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use futures::{StreamExt, TryStreamExt};
 use sqlx::{migrate::MigrateDatabase, Connection, Pool, Sqlite, SqliteConnection, SqlitePool};
 use uuid::Uuid;
 
@@ -36,13 +37,30 @@ pub async fn connection() -> Pool<Sqlite> {
     return SqlitePool::connect(DB_URL).await.unwrap();
 }
 
+#[derive(sqlx::FromRow)]
+pub struct Task {
+    pub id: String,
+    pub description: String,
+    pub finished: bool,
+}
+
 #[async_trait]
 pub trait TaskCrud {
+    async fn get_tasks(&self) -> Vec<Task>;
     async fn insert_task(&self, description: &String) -> String;
 }
 
 #[async_trait]
 impl TaskCrud for MyApp {
+    async fn get_tasks(&self) -> Vec<Task> {
+        let rows = sqlx::query_as::<_, Task>("SELECT * FROM TASKS ORDER BY CREATED_AT")
+            .fetch_all(&self.db_connection)
+            .await
+            .unwrap();
+
+        return rows;
+    }
+
     async fn insert_task(&self, description: &String) -> String {
         let id = Uuid::new_v4();
         sqlx::query("INSERT into Tasks (ID, DESCRIPTION) values ($1, $2)")

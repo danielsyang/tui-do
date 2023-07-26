@@ -14,6 +14,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
+use database::TaskCrud;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -28,7 +29,7 @@ async fn main() {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
     let mut app = MyApp::new().await;
-    app.get_tasks_from_database().await;
+    app.get_tasks().await;
     let tick_rate = Duration::from_millis(250);
 
     let r = run_app(&mut terminal, app, tick_rate).await;
@@ -69,8 +70,9 @@ async fn run_app<B: Backend>(
                         match key.code {
                             KeyCode::Char('w') => app.previous_item(),
                             KeyCode::Char('s') => app.next_item(),
-                            KeyCode::Char('e') => app.unselect(),
-                            KeyCode::Enter => app.set_app_mode(InputMode::Editing),
+                            KeyCode::Char('e') => app.select_or_unselect(&true).await,
+                            KeyCode::Char('q') => app.select_or_unselect(&false).await,
+                            KeyCode::Enter => app.mode = InputMode::Editing,
                             KeyCode::Esc => return Ok(()),
                             _ => {}
                         }
@@ -82,7 +84,7 @@ async fn run_app<B: Backend>(
                             KeyCode::Char(c) => app.set_input(&c),
                             KeyCode::Backspace => app.backspace_input(),
                             KeyCode::Enter => app.add_to_list().await,
-                            KeyCode::Esc => app.set_app_mode(InputMode::Normal),
+                            KeyCode::Esc => app.mode = InputMode::Normal,
                             _ => {}
                         }
                     }

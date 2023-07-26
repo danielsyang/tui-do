@@ -40,7 +40,7 @@ pub async fn connection() -> Pool<Sqlite> {
     return SqlitePool::connect(DB_URL).await.unwrap();
 }
 
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, Debug)]
 pub struct Task {
     pub id: String,
     pub description: String,
@@ -50,13 +50,14 @@ pub struct Task {
 
 #[async_trait]
 pub trait TaskCrud {
-    async fn get_tasks(&self) -> Vec<Task>;
+    async fn get_tasks(&mut self);
     async fn insert_task(&self, description: &String) -> String;
+    async fn update_task(&self, item_id: &String, finished: &bool) -> String;
 }
 
 #[async_trait]
 impl TaskCrud for MyApp {
-    async fn get_tasks(&self) -> Vec<Task> {
+    async fn get_tasks(&mut self) {
         let rows = sqlx::query(
             "SELECT id, description, finished, created_at FROM Tasks ORDER BY CREATED_AT;",
         )
@@ -81,7 +82,7 @@ impl TaskCrud for MyApp {
             })
             .collect::<Vec<_>>();
 
-        return tasks;
+        self.items = tasks;
     }
 
     async fn insert_task(&self, description: &String) -> String {
@@ -94,5 +95,16 @@ impl TaskCrud for MyApp {
             .unwrap();
 
         return id.to_string();
+    }
+
+    async fn update_task(&self, item_id: &String, finished: &bool) -> String {
+        sqlx::query("UPDATE Tasks SET FINISHED = $1 WHERE ID = $2;")
+            .bind(finished)
+            .bind(item_id)
+            .execute(&self.db_connection)
+            .await
+            .unwrap();
+
+        return "Done".to_string();
     }
 }

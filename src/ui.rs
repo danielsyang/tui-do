@@ -19,7 +19,8 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         .items
         .iter()
         .map(|item| {
-            let content = format!("[ ] {}", item);
+            let finished_icon = if item.finished { "[x]" } else { "[ ]" };
+            let content = format!("{} {}", finished_icon, item.description);
             let line = Line::from(Span::styled(content, Style::default()));
 
             ListItem::new(vec![line]).style(Style::default().fg(Color::Black).bg(Color::White))

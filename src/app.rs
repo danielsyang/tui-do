@@ -1,7 +1,7 @@
 use ratatui::widgets::ListState;
 use sqlx::{Pool, Sqlite};
 
-use crate::database::{connection, TaskCrud};
+use crate::database::{connection, Task, TaskCrud};
 
 pub enum InputMode {
     Editing,
@@ -10,7 +10,7 @@ pub enum InputMode {
 
 pub struct MyApp {
     pub state: ListState,
-    pub items: Vec<String>,
+    pub items: Vec<Task>,
     pub mode: InputMode,
     pub input_value: String,
     pub db_connection: Pool<Sqlite>,
@@ -27,23 +27,17 @@ impl MyApp {
         }
     }
 
-    pub async fn get_tasks_from_database(&mut self) {
-        let tasks = self
-            .get_tasks()
-            .await
-            .iter()
-            .map(|x| x.description.clone())
-            .collect::<Vec<_>>();
+    pub async fn select_or_unselect(&mut self, finished: &bool) {
+        let position = self.state.selected().unwrap_or(0);
 
-        self.items = tasks;
-    }
+        let task = self
+            .items
+            .get(position)
+            .expect("Invalid item, array out of bound.");
 
-    pub fn set_app_mode(&mut self, mode: InputMode) {
-        self.mode = mode
-    }
-
-    pub fn unselect(&mut self) {
-        self.state.select(None)
+        self.update_task(&task.id, finished).await;
+        // Update UI
+        self.get_tasks().await;
     }
 
     pub fn next_item(&mut self) {
@@ -92,8 +86,7 @@ impl MyApp {
             return;
         }
         self.insert_task(&curr).await;
-
-        self.items.push(curr);
+        self.get_tasks().await;
         self.input_value = String::new();
     }
 }

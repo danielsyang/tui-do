@@ -24,3 +24,7 @@ This is a simple todo list application written in Rust. It uses the [Ratatui.rs]
 
 - Add task CRUD
 - Mark task as done
+
+#### Jul 27th 2023
+
+- Adjusting "FE" style

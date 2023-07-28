@@ -28,3 +28,7 @@ This is a simple todo list application written in Rust. It uses the [Ratatui.rs]
 #### Jul 27th 2023
 
 - Adjusting "FE" style
+
+#### Jul 28th 2023
+
+- Adding due date

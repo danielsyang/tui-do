@@ -8,24 +8,18 @@ use ratatui::{
     Frame,
 };
 
-use crate::app::{InputMode, MyApp};
+use crate::app::{CursorPlacement, InputMode, MyApp};
 
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
-    let instructions = render_instructions(app);
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .margin(1)
-        .constraints([
-            Constraint::Length(2),
-            Constraint::Length(1),
-            Constraint::Percentage(80),
-            Constraint::Percentage(10),
-        ])
-        .split(frame.size());
-
-    const TASK_AREA: usize = 2;
-    const INPUT_AREA: usize = 3;
     const INSTRUCTION_AREA: usize = 0;
+    const TASK_AREA: usize = 1;
+    const INPUT_AREA: usize = 2;
+    const DUE_DATE_AREA: usize = 3;
+
+    let instructions = Paragraph::new(render_instructions(app))
+        .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true })
+        .block(Block::default());
 
     let items = app
         .items
@@ -52,26 +46,66 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
                 .add_modifier(Modifier::BOLD),
         );
 
-    frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
-
-    let input = Paragraph::new(app.input_value.as_str())
+    let input = Paragraph::new(app.input_description_value.as_str())
         .style(Style::default().fg(Color::Yellow))
-        .block(Block::default().borders(Borders::ALL).title("To Do: "));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Description (*) "),
+        );
 
-    frame.render_widget(input, chunks[INPUT_AREA]);
-    frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
+    let due_date_input = Paragraph::new(app.input_due_date_value.as_str())
+        .style(Style::default().fg(Color::Yellow))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Due Date (DD-MM-YYYY or DD-MM-YYYY hh:mm) (default: EOD) "),
+        );
 
     match app.mode {
-        InputMode::Normal => {}
-        InputMode::Editing => frame.set_cursor(
-            chunks[INPUT_AREA].x + (app.input_value.len() as u16) + 1,
-            chunks[INPUT_AREA].y + 1,
-        ),
+        InputMode::Normal => {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints([Constraint::Percentage(7), Constraint::Percentage(100)])
+                .split(frame.size());
+
+            frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
+            frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+        }
+        InputMode::Editing => {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(1)
+                .constraints([
+                    Constraint::Percentage(7),
+                    Constraint::Percentage(70),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(7),
+                ])
+                .split(frame.size());
+
+            frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
+            frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+            frame.render_widget(input, chunks[INPUT_AREA]);
+            frame.render_widget(due_date_input, chunks[DUE_DATE_AREA]);
+
+            match app.cursor_placement {
+                CursorPlacement::Description => frame.set_cursor(
+                    chunks[INPUT_AREA].x + (app.input_description_value.len() as u16) + 1,
+                    chunks[INPUT_AREA].y + 1,
+                ),
+                CursorPlacement::DueDate => frame.set_cursor(
+                    chunks[DUE_DATE_AREA].x + (app.input_due_date_value.len() as u16) + 1,
+                    chunks[DUE_DATE_AREA].y + 1,
+                ),
+            }
+        }
     }
 }
 
-fn render_instructions<'a>(app: &mut MyApp) -> Paragraph<'a> {
-    let instructions = match app.mode {
+fn render_instructions<'a>(app: &mut MyApp) -> Line<'a> {
+    match app.mode {
         InputMode::Normal => Line::from(vec![
             Span::raw("Press "),
             Span::styled("'Enter'", Style::default().fg(Color::Rgb(148, 130, 68))),
@@ -99,10 +133,5 @@ fn render_instructions<'a>(app: &mut MyApp) -> Paragraph<'a> {
             Span::styled("'Esc'", Style::default().fg(Color::Rgb(148, 130, 68))),
             Span::raw(" to return to normal mode."),
         ]),
-    };
-
-    Paragraph::new(instructions)
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true })
-        .block(Block::default())
+    }
 }

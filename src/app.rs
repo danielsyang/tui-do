@@ -8,11 +8,18 @@ pub enum InputMode {
     Normal,
 }
 
+pub enum CursorPlacement {
+    Description,
+    DueDate,
+}
+
 pub struct MyApp {
     pub state: ListState,
     pub items: Vec<Task>,
     pub mode: InputMode,
-    pub input_value: String,
+    pub cursor_placement: CursorPlacement,
+    pub input_description_value: String,
+    pub input_due_date_value: String,
     pub db_connection: Pool<Sqlite>,
 }
 
@@ -22,8 +29,10 @@ impl MyApp {
             state: ListState::default(),
             items: vec![],
             mode: InputMode::Normal,
-            input_value: String::new(),
+            input_description_value: String::new(),
+            input_due_date_value: String::new(),
             db_connection: connection().await,
+            cursor_placement: CursorPlacement::Description,
         }
     }
 
@@ -71,22 +80,40 @@ impl MyApp {
     }
 
     pub fn set_input(&mut self, c: &char) {
-        self.input_value = self.input_value.to_owned() + c.to_string().as_str();
+        match self.cursor_placement {
+            CursorPlacement::Description => {
+                self.input_description_value =
+                    self.input_description_value.to_owned() + c.to_string().as_str()
+            }
+            CursorPlacement::DueDate => {
+                self.input_due_date_value =
+                    self.input_due_date_value.to_owned() + c.to_string().as_str()
+            }
+        }
     }
 
     pub fn backspace_input(&mut self) {
-        let mut next_value = self.input_value.clone();
-        next_value.pop();
-        self.input_value = next_value;
+        match self.cursor_placement {
+            CursorPlacement::Description => {
+                let mut next_value = self.input_description_value.clone();
+                next_value.pop();
+                self.input_description_value = next_value;
+            }
+            CursorPlacement::DueDate => {
+                let mut next_value = self.input_due_date_value.clone();
+                next_value.pop();
+                self.input_due_date_value = next_value;
+            }
+        }
     }
 
     pub async fn add_to_list(&mut self) {
-        let curr = self.input_value.clone();
+        let curr = self.input_description_value.clone();
         if curr.is_empty() {
             return;
         }
         self.insert_task(&curr).await;
         self.get_tasks().await;
-        self.input_value = String::new();
+        self.input_description_value = String::new();
     }
 }

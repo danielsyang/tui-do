@@ -7,7 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use app::{InputMode, MyApp};
+use app::{CursorPlacement, InputMode, MyApp};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -85,6 +85,14 @@ async fn run_app<B: Backend>(
                             KeyCode::Backspace => app.backspace_input(),
                             KeyCode::Enter => app.add_to_list().await,
                             KeyCode::Esc => app.mode = InputMode::Normal,
+                            KeyCode::Tab => match app.cursor_placement {
+                                CursorPlacement::Description => {
+                                    app.cursor_placement = CursorPlacement::DueDate
+                                }
+                                CursorPlacement::DueDate => {
+                                    app.cursor_placement = CursorPlacement::Description
+                                }
+                            },
                             _ => {}
                         }
                     }

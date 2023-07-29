@@ -13,8 +13,7 @@ use crate::app::{CursorPlacement, InputMode, MyApp};
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
     const INSTRUCTION_AREA: usize = 0;
     const TASK_AREA: usize = 1;
-    const INPUT_AREA: usize = 2;
-    const DUE_DATE_AREA: usize = 3;
+    const ERROR_AREA: usize = 2;
 
     let instructions = Paragraph::new(render_instructions(app))
         .alignment(Alignment::Center)
@@ -74,30 +73,65 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
             frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
         }
         InputMode::Editing => {
+            let constraints = match &app.input_error {
+                Some(_) => vec![
+                    Constraint::Percentage(7),
+                    Constraint::Percentage(65),
+                    Constraint::Max(1),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(7),
+                ],
+                None => vec![
+                    Constraint::Percentage(7),
+                    Constraint::Percentage(65),
+                    Constraint::Percentage(15),
+                    Constraint::Percentage(7),
+                ],
+            };
+
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(1)
-                .constraints([
-                    Constraint::Percentage(7),
-                    Constraint::Percentage(70),
-                    Constraint::Percentage(15),
-                    Constraint::Percentage(7),
-                ])
+                .constraints(constraints.as_ref())
                 .split(frame.size());
 
-            frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
-            frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
-            frame.render_widget(input, chunks[INPUT_AREA]);
-            frame.render_widget(due_date_input, chunks[DUE_DATE_AREA]);
+            let input_area = match &app.input_error {
+                Some(_) => 3,
+                None => 2,
+            };
+
+            let due_date_area = match &app.input_error {
+                Some(_) => 4,
+                None => 3,
+            };
+
+            match &app.input_error {
+                Some(err) => {
+                    let error_paragraph =
+                        Paragraph::new(Span::styled(err, Style::default().fg(Color::Red)));
+
+                    frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
+                    frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+                    frame.render_widget(error_paragraph, chunks[ERROR_AREA]);
+                    frame.render_widget(input, chunks[input_area]);
+                    frame.render_widget(due_date_input, chunks[due_date_area]);
+                }
+                None => {
+                    frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
+                    frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+                    frame.render_widget(input, chunks[input_area]);
+                    frame.render_widget(due_date_input, chunks[due_date_area]);
+                }
+            }
 
             match app.cursor_placement {
                 CursorPlacement::Description => frame.set_cursor(
-                    chunks[INPUT_AREA].x + (app.input_description_value.len() as u16) + 1,
-                    chunks[INPUT_AREA].y + 1,
+                    chunks[input_area].x + (app.input_description_value.len() as u16) + 1,
+                    chunks[input_area].y + 1,
                 ),
                 CursorPlacement::DueDate => frame.set_cursor(
-                    chunks[DUE_DATE_AREA].x + (app.input_due_date_value.len() as u16) + 1,
-                    chunks[DUE_DATE_AREA].y + 1,
+                    chunks[due_date_area].x + (app.input_due_date_value.len() as u16) + 1,
+                    chunks[due_date_area].y + 1,
                 ),
             }
         }

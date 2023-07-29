@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use sqlx::{
     migrate::MigrateDatabase,
-    types::chrono::{DateTime, Utc},
+    types::chrono::{DateTime, NaiveDateTime, Utc},
     Connection, Pool, Row, Sqlite, SqliteConnection, SqlitePool,
 };
 use uuid::Uuid;
@@ -27,6 +27,7 @@ pub async fn connection() -> Pool<Sqlite> {
         CREATE TABLE if not EXISTS Tasks (	
             ID TEXT PRIMARY KEY,
             DESCRIPTION TEXT NOT NULL,
+            DUE_DATE DATETIME NOT NULL,
             FINISHED BOOLEAN NOT NULL DEFAULT FALSE,
             CREATED_AT DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         )",
@@ -51,7 +52,7 @@ pub struct Task {
 #[async_trait]
 pub trait TaskCrud {
     async fn get_tasks(&mut self);
-    async fn insert_task(&self, description: &String) -> String;
+    async fn insert_task(&self, description: &String, due_date: &NaiveDateTime) -> String;
     async fn update_task(&self, item_id: &String, finished: &bool) -> String;
 }
 
@@ -85,11 +86,12 @@ impl TaskCrud for MyApp {
         self.items = tasks;
     }
 
-    async fn insert_task(&self, description: &String) -> String {
+    async fn insert_task(&self, description: &String, due_date: &NaiveDateTime) -> String {
         let id = Uuid::new_v4();
-        sqlx::query("INSERT into Tasks (ID, DESCRIPTION) values ($1, $2)")
+        sqlx::query("INSERT into Tasks (ID, DESCRIPTION, DUE_DATE) values ($1, $2, $3)")
             .bind(id.to_string())
             .bind(description)
+            .bind(due_date.to_string())
             .execute(&self.db_connection)
             .await
             .unwrap();

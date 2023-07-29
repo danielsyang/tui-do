@@ -32,3 +32,9 @@ This is a simple todo list application written in Rust. It uses the [Ratatui.rs]
 #### Jul 28th 2023
 
 - Adding due date
+
+
+#### Jul 29th 2023
+
+- Added due date to the Task table
+- Next: Grouping by date

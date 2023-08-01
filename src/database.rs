@@ -51,14 +51,14 @@ pub struct Task {
 
 #[async_trait]
 pub trait TaskCrud {
-    async fn get_tasks(&mut self);
+    async fn get_tasks(&self) -> Vec<Task>;
     async fn insert_task(&self, description: &String, due_date: &NaiveDateTime) -> String;
     async fn update_task(&self, item_id: &String, finished: &bool) -> String;
 }
 
 #[async_trait]
 impl TaskCrud for MyApp {
-    async fn get_tasks(&mut self) {
+    async fn get_tasks(&self) -> Vec<Task> {
         let rows = sqlx::query(
             "SELECT id, description, finished, created_at FROM Tasks ORDER BY CREATED_AT;",
         )
@@ -83,7 +83,7 @@ impl TaskCrud for MyApp {
             })
             .collect::<Vec<_>>();
 
-        self.items = tasks;
+        return tasks;
     }
 
     async fn insert_task(&self, description: &String, due_date: &NaiveDateTime) -> String {

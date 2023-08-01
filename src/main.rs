@@ -1,5 +1,6 @@
 mod app;
 mod database;
+
 mod ui;
 
 use std::{
@@ -29,7 +30,8 @@ async fn main() {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend).unwrap();
     let mut app = MyApp::new().await;
-    app.get_tasks().await;
+    let tasks = app.get_tasks().await;
+    app.group_tasks(tasks);
     let tick_rate = Duration::from_millis(250);
 
     let r = run_app(&mut terminal, app, tick_rate).await;
@@ -46,6 +48,7 @@ async fn main() {
 
     if let Err(err) = r {
         println!("{}", err);
+        panic!("Exiting")
     }
 }
 
@@ -99,5 +102,55 @@ async fn run_app<B: Backend>(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::database::{connection, Task};
+    use sqlx::{
+        types::chrono::{DateTime, NaiveDate, Utc},
+        Row,
+    };
+    use std::{collections::HashMap, hash::Hash};
+
+    #[tokio::test]
+    async fn hash_map() {
+        let conn = connection().await;
+
+        let result = sqlx::query(
+            "SELECT id, description, finished, created_at FROM Tasks ORDER BY CREATED_AT;",
+        )
+        .fetch_all(&conn)
+        .await
+        .unwrap();
+
+        let tasks = result
+            .iter()
+            .map(|row| {
+                let id = row.get::<String, _>(0);
+                let description = row.get::<String, _>(1);
+                let finished = row.get::<bool, _>(2);
+                let created_at = row.get::<DateTime<Utc>, _>(3);
+
+                Task {
+                    description,
+                    id,
+                    finished,
+                    created_at,
+                }
+            })
+            .collect::<Vec<_>>();
+
+        let mut all: HashMap<NaiveDate, Vec<Task>> = HashMap::new();
+
+        for task in tasks {
+            let date_naive = task.created_at.date_naive();
+            all.entry(date_naive).or_insert_with(Vec::new).push(task);
+        }
+
+        println!("{:?}", all);
+
+        assert_eq!(false, true)
     }
 }

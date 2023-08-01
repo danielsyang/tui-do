@@ -1,4 +1,7 @@
-use ratatui::widgets::ListState;
+use core::panic;
+use std::collections::HashMap;
+
+use ratatui::widgets::TableState;
 use sqlx::{
     types::chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc},
     Pool, Sqlite,
@@ -17,8 +20,8 @@ pub enum CursorPlacement {
 }
 
 pub struct MyApp {
-    pub state: ListState,
-    pub items: Vec<Task>,
+    pub state: TableState,
+    pub group_tasks: HashMap<NaiveDate, Vec<Task>>,
     pub mode: InputMode,
     pub cursor_placement: CursorPlacement,
     pub input_description_value: String,
@@ -30,8 +33,8 @@ pub struct MyApp {
 impl MyApp {
     pub async fn new() -> Self {
         MyApp {
-            state: ListState::default(),
-            items: vec![],
+            state: TableState::default(),
+            group_tasks: HashMap::new(),
             mode: InputMode::Normal,
             cursor_placement: CursorPlacement::Description,
             input_description_value: String::new(),
@@ -44,29 +47,32 @@ impl MyApp {
     pub async fn select_or_unselect(&mut self, finished: &bool) {
         let position = self.state.selected().unwrap_or(0);
 
-        let task = self
-            .items
-            .get(position)
-            .expect("Invalid item, array out of bound.");
+        panic!("Refactoring");
 
-        self.update_task(&task.id, finished).await;
-        // Update UI
-        self.get_tasks().await;
+        // let task = self
+        //     .items
+        //     .get(position)
+        //     .expect("Invalid item, array out of bound.");
+
+        // self.update_task(&task.id, finished).await;
+        // // Update UI
+        // self.get_tasks().await;
     }
 
     pub fn next_item(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i < self.items.len() - 1 {
-                    i + 1
-                } else {
-                    self.items.len() - 1
-                }
-            }
-            None => 0,
-        };
+        panic!("Refactoring");
+        // let i = match self.state.selected() {
+        //     Some(i) => {
+        //         if i < self.items.len() - 1 {
+        //             i + 1
+        //         } else {
+        //             self.items.len() - 1
+        //         }
+        //     }
+        //     None => 0,
+        // };
 
-        self.state.select(Some(i))
+        // self.state.select(Some(i))
     }
 
     pub fn previous_item(&mut self) {
@@ -142,6 +148,16 @@ impl MyApp {
                 self.input_error = Some("Due date is invalid".to_string());
                 return;
             }
+        }
+    }
+
+    pub fn group_tasks(&mut self, tasks: Vec<Task>) {
+        for task in tasks {
+            let date_naive = task.created_at.date_naive();
+            self.group_tasks
+                .entry(date_naive)
+                .or_insert_with(Vec::new)
+                .push(task);
         }
     }
 }

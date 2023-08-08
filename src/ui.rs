@@ -60,8 +60,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(DARK_GREEN))
-                .title("Your To-Do List"),
+                .border_style(Style::default().fg(DARK_GREEN)),
         )
         .highlight_style(
             Style::default()

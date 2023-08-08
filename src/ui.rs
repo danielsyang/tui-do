@@ -10,6 +10,8 @@ use ratatui::{
 
 use crate::app::{CursorPlacement, InputMode, MyApp};
 
+const DARK_GREEN: Color = Color::Rgb(80, 133, 57);
+
 pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
     const INSTRUCTION_AREA: usize = 0;
     const TASK_AREA: usize = 1;
@@ -18,7 +20,18 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
     let instructions = Paragraph::new(render_instructions(app))
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true })
-        .block(Block::default());
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(DARK_GREEN)),
+        );
+
+    let header = Row::new(vec![
+        Cell::from("Done").style(Style::default().fg(DARK_GREEN)),
+        Cell::from("Description").style(Style::default().fg(DARK_GREEN)),
+        Cell::from("Due by").style(Style::default().fg(DARK_GREEN)),
+    ])
+    .bottom_margin(1);
 
     let matrix_tasks = app
         .items
@@ -30,8 +43,12 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
                 Cell::from("[ ]")
             };
             let description = Cell::from(item.description.to_string());
-            // For now, mocking due date with created_at value
-            let due_date = Cell::from(item.created_at.date_naive().to_string());
+            let due_date = Cell::from(
+                item.due_date
+                    .naive_local()
+                    .format("%b %d %Y %I:%H %p")
+                    .to_string(),
+            );
 
             let row = vec![checked_item, description, due_date];
             Row::new(row).style(Style::default().fg(Color::Rgb(196, 196, 196)))
@@ -39,10 +56,11 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         .collect::<Vec<_>>();
 
     let tasks_table = Table::new(matrix_tasks)
+        .header(header)
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::Rgb(80, 133, 57)))
+                .border_style(Style::default().fg(DARK_GREEN))
                 .title("Your To-Do List"),
         )
         .highlight_style(
@@ -76,8 +94,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         InputMode::Normal => {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .margin(1)
-                .constraints([Constraint::Percentage(7), Constraint::Percentage(100)])
+                .constraints([Constraint::Percentage(10), Constraint::Percentage(90)])
                 .split(frame.size());
 
             frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);

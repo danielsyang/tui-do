@@ -61,7 +61,7 @@ pub trait TaskCrud {
 impl TaskCrud for MyApp {
     async fn get_tasks(&mut self) {
         let rows = sqlx::query(
-            "SELECT id, description, finished, created_at FROM Tasks ORDER BY CREATED_AT;",
+            "SELECT id, description, finished, due_date, created_at FROM Tasks ORDER BY CREATED_AT;",
         )
         .fetch_all(&self.db_connection)
         .await
@@ -73,13 +73,15 @@ impl TaskCrud for MyApp {
                 let id = row.get::<String, _>(0);
                 let description = row.get::<String, _>(1);
                 let finished = row.get::<bool, _>(2);
-                let created_at = row.get::<DateTime<Utc>, _>(3);
+                let due_date = row.get::<DateTime<Utc>, _>(3);
+                let created_at = row.get::<DateTime<Utc>, _>(4);
 
                 Task {
                     description,
                     id,
                     finished,
                     created_at,
+                    due_date,
                 }
             })
             .collect::<Vec<_>>();

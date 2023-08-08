@@ -4,7 +4,7 @@ use ratatui::{
     prelude::Alignment,
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
     Frame,
 };
 
@@ -20,19 +20,25 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
         .wrap(Wrap { trim: true })
         .block(Block::default());
 
-    let items = app
+    let matrix_tasks = app
         .items
         .iter()
         .map(|item| {
-            let finished_icon = if item.finished { "[x]" } else { "[ ]" };
-            let content = format!("{} {}", finished_icon, item.description);
-            let line = Line::from(Span::styled(content, Style::default()));
+            let checked_item = if item.finished {
+                Cell::from("[x]")
+            } else {
+                Cell::from("[ ]")
+            };
+            let description = Cell::from(item.description.to_string());
+            // For now, mocking due date with created_at value
+            let due_date = Cell::from(item.created_at.date_naive().to_string());
 
-            ListItem::new(vec![line]).style(Style::default().fg(Color::Rgb(196, 196, 196)))
+            let row = vec![checked_item, description, due_date];
+            Row::new(row).style(Style::default().fg(Color::Rgb(196, 196, 196)))
         })
         .collect::<Vec<_>>();
 
-    let widget_items = List::new(items)
+    let tasks_table = Table::new(matrix_tasks)
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -43,7 +49,12 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
             Style::default()
                 .fg(Color::Rgb(148, 130, 68))
                 .add_modifier(Modifier::BOLD),
-        );
+        )
+        .widths(&[
+            Constraint::Percentage(10),
+            Constraint::Percentage(75),
+            Constraint::Percentage(15),
+        ]);
 
     let input = Paragraph::new(app.input_description_value.as_str())
         .style(Style::default().fg(Color::Yellow))
@@ -70,7 +81,7 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
                 .split(frame.size());
 
             frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
-            frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+            frame.render_stateful_widget(tasks_table, chunks[TASK_AREA], &mut app.state);
         }
         InputMode::Editing => {
             let constraints = match &app.input_error {
@@ -111,14 +122,14 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut MyApp) {
                         Paragraph::new(Span::styled(err, Style::default().fg(Color::Red)));
 
                     frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
-                    frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+                    frame.render_stateful_widget(tasks_table, chunks[TASK_AREA], &mut app.state);
                     frame.render_widget(error_paragraph, chunks[ERROR_AREA]);
                     frame.render_widget(input, chunks[input_area]);
                     frame.render_widget(due_date_input, chunks[due_date_area]);
                 }
                 None => {
                     frame.render_widget(instructions, chunks[INSTRUCTION_AREA]);
-                    frame.render_stateful_widget(widget_items, chunks[TASK_AREA], &mut app.state);
+                    frame.render_stateful_widget(tasks_table, chunks[TASK_AREA], &mut app.state);
                     frame.render_widget(input, chunks[input_area]);
                     frame.render_widget(due_date_input, chunks[due_date_area]);
                 }

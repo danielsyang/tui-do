@@ -1,4 +1,4 @@
-use ratatui::widgets::ListState;
+use ratatui::widgets::TableState;
 use sqlx::{
     types::chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc},
     Pool, Sqlite,
@@ -17,7 +17,7 @@ pub enum CursorPlacement {
 }
 
 pub struct MyApp {
-    pub state: ListState,
+    pub state: TableState,
     pub items: Vec<Task>,
     pub mode: InputMode,
     pub cursor_placement: CursorPlacement,
@@ -30,7 +30,7 @@ pub struct MyApp {
 impl MyApp {
     pub async fn new() -> Self {
         MyApp {
-            state: ListState::default(),
+            state: TableState::default(),
             items: vec![],
             mode: InputMode::Normal,
             cursor_placement: CursorPlacement::Description,

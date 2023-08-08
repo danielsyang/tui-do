@@ -47,6 +47,7 @@ pub struct Task {
     pub description: String,
     pub finished: bool,
     pub created_at: DateTime<Utc>,
+    pub due_date: DateTime<Utc>,
 }
 
 #[async_trait]
